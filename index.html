@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Survey Data Quality Lab</title>
+<style>
+:root{
+  --paper:#F3F4F6; --paper2:#E9EBEF; --card:#FFFFFF; --ink:#0F1B2D; --ink2:#3D4A5F; --muted:#6B7789;
+  --line:#E2E6EC; --line2:#CBD2DC; --accent:#0B6E5D; --accent-deep:#084F43; --accent-soft:#E3F2EE;
+  --good:#067647; --good-bg:#EAFBF1; --bad:#B42318; --bad-bg:#FEF2F0; --warn:#9A6206; --warn-bg:#FDF6E3;
+  --banner:#0C2530; --banner-ink:#EAF4F1; --banner-accent:#5EEAD4;
+  --shadow:0 1px 2px rgba(15,27,45,.05),0 1px 3px rgba(15,27,45,.04);
+  --radius:8px;
+  --s-att:#0B6E5D; --s-spd:#B45309; --s-str:#2563EB; --s-ina:#7C3AED; --s-fab:#8492A5;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --paper:#0A0F16; --paper2:#131A24; --card:#121A25; --ink:#E9EDF3; --ink2:#AFBACA; --muted:#8492A5;
+  --line:#232F3F; --line2:#35445A; --accent:#3EC9B0; --accent-deep:#3EC9B0; --accent-soft:#0E2B27;
+  --good:#4ADE80; --good-bg:#0D2B1C; --bad:#F08A7D; --bad-bg:#331A16; --warn:#E8BC5A; --warn-bg:#2E2510;
+  --banner:#0E2B33; --banner-ink:#EAF4F1; --banner-accent:#5EEAD4;
+  --shadow:0 1px 2px rgba(0,0,0,.35);
+  --s-att:#3EC9B0; --s-spd:#F2B25C; --s-str:#6EA8FE; --s-ina:#B79CFA; --s-fab:#5B7CA6; }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55}
+::selection{background:var(--accent);color:#fff}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+h1,h2,h3{font-family:"IBM Plex Sans",-apple-system,sans-serif;line-height:1.15;margin:0;letter-spacing:-.015em}
+.wrap{max-width:1140px;margin:0 auto;padding:0 20px 72px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* ---------- masthead ---------- */
+.masthead{padding:40px 0 0}
+h1{font-size:clamp(32px,5vw,44px);font-weight:700;letter-spacing:-.028em;color:var(--ink)}
+.lede{font-size:16.5px;line-height:1.6;color:var(--ink2);margin:14px 0 18px}
+.lede strong{color:var(--ink)}
+.assump{margin:0 0 20px;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);box-shadow:var(--shadow);padding:12px 16px}
+.assump .assump-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 8px}
+.assump ul{margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:var(--ink2)}
+.assump li{margin:2px 0}
+.src{font-size:12px;color:var(--muted);line-height:1.5}
+/* ---------- steps strip ---------- */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0 4px}
+@media(max-width:700px){.steps{grid-template-columns:1fr}}
+.step{display:flex;gap:12px;align-items:flex-start;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;cursor:pointer;font-family:inherit;box-shadow:var(--shadow);width:100%}
+.step:hover{border-color:var(--accent)}
+.step .n{flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.step strong{display:block;font-size:14px;color:var(--ink)}
+.step span{font-size:12.5px;color:var(--muted);line-height:1.45}
+/* ---------- contents nav ---------- */
+.toc{position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;gap:2px;margin:26px -20px 0;padding:10px 20px;background:var(--paper);border-bottom:1px solid var(--line2)}
+.toc a{font-size:12.5px;font-weight:600;color:var(--ink2);text-decoration:none;padding:6px 10px;border-radius:6px;white-space:nowrap}
+.toc a:hover{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.toc a b{color:var(--accent);font-family:"IBM Plex Mono",monospace;font-weight:600;margin-right:5px;font-size:11.5px}
+/* ---------- sections ---------- */
+section{margin-top:44px;scroll-margin-top:64px}
+.sec-head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:600;color:var(--accent);border:1px solid var(--line2);background:var(--card);border-radius:6px;padding:3px 7px;box-shadow:var(--shadow)}
+h2{font-size:21px;font-weight:700}
+.sec-sub{color:var(--ink2);font-size:14.5px;line-height:1.6;max-width:800px;margin:8px 0 16px}
+.group-label{display:flex;align-items:center;gap:12px;margin:40px 0 -28px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.group-label::after{content:"";flex:1;height:1px;background:var(--line2)}
+.group-label small{letter-spacing:0;text-transform:none;font-weight:600;color:var(--muted);font-size:12.5px}
+/* ---------- layout & cards ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;box-shadow:var(--shadow)}
+.card h3,.card h2{font-size:15.5px;font-weight:700;margin-bottom:4px}
+.card .hint{font-size:12.5px;color:var(--muted);margin:0 0 12px;line-height:1.5}
+/* ---------- tables & inputs ---------- */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);text-align:right;padding:8px 6px;border-bottom:2px solid var(--line2);font-weight:700}
+th:first-child,td:first-child{text-align:left}
+td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:right;vertical-align:middle;font-variant-numeric:tabular-nums}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:var(--paper)}
+tr:last-child td{border-bottom:none}
+td.name{font-weight:600;text-align:left;color:var(--ink)}
+td.lead{background:var(--accent-soft);font-weight:700}
+input[type=number]{width:74px;padding:6px 8px;border:1px solid var(--line2);border-radius:6px;background:var(--paper);color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:right;transition:border-color .12s,box-shadow .12s}
+input[type=number]:hover{border-color:var(--muted)}
+input[type=number]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--card)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:transparent;cursor:pointer;margin:2px 0}
+input[type=range].hasnum{width:calc(100% - 84px);vertical-align:middle}
+.numin{margin-left:8px;vertical-align:middle}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:99px;background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--fill,50%),var(--paper2) var(--fill,50%))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--card);border:2px solid var(--accent);margin-top:-7px;box-shadow:0 1px 4px rgba(15,27,45,.25);transition:transform .12s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+input[type=range]::-moz-range-track{height:5px;border-radius:99px;background:var(--paper2)}
+input[type=range]::-moz-range-progress{height:5px;border-radius:99px;background:var(--accent)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--card);border:2px solid var(--accent);box-shadow:0 1px 4px rgba(15,27,45,.25)}
+input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:4px}
+/* ---------- controls ---------- */
+.ctl{margin:14px 0}
+.ctl label{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13.5px;font-weight:600;margin-bottom:4px}
+.ctl label output{font-family:"IBM Plex Mono",monospace;color:var(--accent);font-weight:700;font-size:14px}
+.ctl .note{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.55}
+.seg{display:flex;flex-wrap:wrap;gap:3px;background:var(--paper2);border-radius:9px;padding:3px}
+.seg button{appearance:none;border:none;background:transparent;color:var(--ink2);border-radius:6px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;flex:1 1 auto;transition:background .12s,color .12s;font-family:inherit}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(15,27,45,.14)}
+.toggle-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-row .t{font-weight:700;font-size:14px}
+.toggle-row .d{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.5}
+.switch{position:relative;width:46px;height:26px;flex:none;margin-top:2px}
+.switch input{opacity:0;width:100%;height:100%;position:absolute;margin:0;cursor:pointer}
+.switch .tr{position:absolute;inset:0;background:var(--line2);border-radius:999px;pointer-events:none;transition:background .15s}
+.switch .tr::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch input:checked + .tr{background:var(--accent)}
+.switch input:checked + .tr::after{left:23px}
+.switch input:focus-visible + .tr{outline:2px solid var(--accent);outline-offset:2px}
+.preset-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.lchip{border:1px solid var(--line2);background:var(--card);border-radius:999px;padding:5px 11px;font-size:12px;font-family:inherit;cursor:pointer;color:var(--ink2)}
+.lchip:hover{border-color:var(--accent);color:var(--accent-deep)}
+.lchip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-deep);font-weight:700}
+.pickread{font-size:14px;color:var(--ink2);line-height:1.6;margin:0 0 12px;padding:12px 14px;background:var(--accent-soft);border-radius:8px}
+.pickread strong{color:var(--ink)}
+.pickread .mono{font-weight:700;font-size:16px}
+/* ---------- outputs ---------- */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:16px 0}
+@media(max-width:960px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.kpi{padding:13px 14px}.kpi .v{font-size:21px}.kpi .s{font-size:12px}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow)}
+.kpi .v{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.kpi .k{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-top:4px}
+.kpi .s{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.45}
+.flag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;letter-spacing:.02em;white-space:nowrap}
+.flag.ok{background:var(--good-bg);color:var(--good)}
+.flag.breach{background:var(--bad-bg);color:var(--bad)}
+.flag.watch{background:var(--warn-bg);color:var(--warn)}
+svg text{font-family:"IBM Plex Mono",monospace}
+/* ---------- composition strip ---------- */
+.mixbar{display:flex;height:26px;border-radius:6px;overflow:hidden;background:var(--paper2)}
+.mixbar i{display:block;height:100%;min-width:0}
+.strip-labels{display:grid;grid-template-columns:repeat(5,1fr);gap:8px 14px;margin-top:10px}
+@media(max-width:760px){.strip-labels{grid-template-columns:repeat(2,1fr)}}
+.strip-labels .sl{font-size:12.5px;color:var(--ink2);line-height:1.45}
+.strip-labels .sl i{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:6px}
+.strip-labels .sl b{color:var(--ink);display:block;font-size:13px}
+/* ---------- bar rows ---------- */
+.bar-row{display:grid;grid-template-columns:118px 1fr 74px;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.bar-row:last-child{border-bottom:none}
+.bar-row .mono{font-weight:600;text-align:right}
+.bar-track{height:10px;background:var(--paper2);border-radius:99px;overflow:hidden}
+.bar-track i{display:block;height:100%;background:var(--accent);border-radius:99px}
+@media(max-width:560px){.bar-row{grid-template-columns:92px 1fr 64px;font-size:12px}}
+/* ---------- memo, notes, documents ---------- */
+.memo{background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:24px 26px;font-size:15px;line-height:1.65;box-shadow:var(--shadow)}
+.memo p{margin:0 0 14px;color:var(--ink2)}
+.memo p strong{color:var(--ink)}
+.memo p:last-child{margin-bottom:0}
+.note{font-size:13.5px;color:var(--ink2);line-height:1.6;margin:0 0 10px}
+.note strong{color:var(--ink)}
+.ev-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;border-radius:999px;padding:2px 8px;white-space:nowrap;vertical-align:1px}
+.ev-tag.assump{background:var(--bad-bg);color:var(--bad)}
+.ev-tag.math{background:var(--accent-soft);color:var(--accent-deep)}
+@media (prefers-color-scheme: dark){.ev-tag.math{color:var(--accent)}}
+.doc-card p{color:var(--ink2);font-size:14.5px;line-height:1.65;margin:0 0 12px;max-width:820px}
+.doc-card p:last-child{margin-bottom:0}
+.doc-card p strong{color:var(--ink)}
+.doc-card h4{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin:18px 0 6px}
+.doc-card h4:first-child{margin-top:0}
+.doc-card ul{margin:0;padding-left:18px;color:var(--ink2);font-size:14.5px;line-height:1.6}
+.doc-card li{margin-bottom:8px}
+.btn{appearance:none;border:1px solid var(--accent-deep);background:var(--accent);color:#fff;border-radius:7px;padding:10px 18px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:var(--shadow);transition:background .12s,transform .08s}
+.btn:hover{background:var(--accent-deep)}
+.btn:active{transform:translateY(1px)}
+tr.current-row td{background:var(--accent-soft)}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll-x table{min-width:720px}
+.code-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.code-scroll table{min-width:680px}
+.code-scroll td{text-align:left;vertical-align:top;line-height:1.5}
+.code-scroll td.num,.code-scroll th.num{text-align:right}
+.code-scroll th{text-align:left}
+.srclist{font-size:12.5px;color:var(--muted);line-height:1.7;margin:10px 0 0;padding-left:18px}
+.srclist li{margin-bottom:4px;overflow-wrap:anywhere}
+/* ---------- footer ---------- */
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;font-size:12.5px;color:var(--muted);line-height:1.65;display:grid;grid-template-columns:1fr 1fr;gap:8px 28px}
+.foot p{margin:0 0 8px}
+.foot strong{color:var(--ink)}
+@media(max-width:700px){.foot{grid-template-columns:1fr}}
+/* ---------- small screens ---------- */
+@media (max-width:1180px){section{scroll-margin-top:104px}}
+@media (max-width:700px){
+  html,body{overflow-x:clip}
+  .wrap{padding:0 14px 120px}
+  .masthead{padding-top:26px}
+  .toc{position:static;margin:22px -14px 0;padding:8px 14px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .toc::-webkit-scrollbar{display:none}
+  .toc a{padding:9px 10px}
+  section{scroll-margin-top:16px}
+  input[type=number]{font-size:16px}
+  .seg button{min-height:44px}
+  .btn{min-height:44px}
+  .card{padding:16px}
+  .memo{padding:20px}
+  .kpis{gap:10px}
+  .switch{width:52px;height:40px;margin-top:0}
+  .switch .tr{top:7px;height:26px}
+  .switch input:checked + .tr::after{left:29px}
+}
+@media (pointer:coarse){
+  input[type=range]{height:32px}
+  input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-10.5px}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px}
+}
+@media print{
+  .toc,.steps{display:none !important}
+  .scroll-x,.code-scroll{overflow:visible !important}
+  table{font-size:9.5px}
+  th,td{padding:4px 5px}
+  section,.card{break-inside:avoid-page}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <h1>Survey Data Quality Lab</h1>
+  <p class="lede">A brand tracker fields 2,400 completes, and the share of those completes that survives quality control decides what the headline number means. This Lab prices that decision. Toggle the checks a research team runs, watch the headline move toward a true value the simulation knows by construction, and see what each provider's completes cost once the unusable ones come out. <strong>Every dataset on this page is simulated.</strong></p>
+  <div class="assump">
+    <p class="assump-h">Assumptions</p>
+    <ul>
+      <li>All respondent data on this page is simulated. A seeded generator (mulberry32, seed 20261123) builds 2,400 completes per provider from five respondent strata, so every visitor sees the same numbers.</li>
+      <li>The survey is a brand-health tracker for Northwind Coffee, a fictional coffee chain. The headline measure is brand consideration: the share of respondents who would consider Northwind for their next coffee purchase.</li>
+      <li>The true headline value is the brand consideration rate among attentive respondents in the simulated data. It is known because the data is generated. Field data has no equivalent.</li>
+      <li>Provider prices default to $6.50, $4.00, and $1.80 per complete for Providers A, B, and C. The providers are fictional, and their respondent mixes are illustrative.</li>
+      <li>The speeder screen defaults to 3.0 minutes. The attentive median completion time in the simulated data is 9.0 minutes, so the default threshold sits at about a third of it.</li>
+      <li>Two percentages in §03, 55.0% and 75.3%, are program figures from Evan Volness's open-end coding work. The 40 responses in that section are written for this page. The section keeps the program figures and the example apart.</li>
+    </ul>
+  </div>
+  <p class="src">A working model by Evan Volness · November 2026 · All data simulated; the published evidence behind the method sits in Methodology §05.</p>
+</header>
+
+<div class="steps" aria-label="How to use this Lab">
+  <button type="button" class="step" data-goto="#sec-ladder"><span class="n">1</span><span><strong>Pick a provider</strong><span>Each provider fields the same survey to a different respondent mix.</span></span></button>
+  <button type="button" class="step" data-goto="#sec-ladder"><span class="n">2</span><span><strong>Set the checks</strong><span>Toggle the quality checks and move the speeder threshold.</span></span></button>
+  <button type="button" class="step" data-goto="#sec-providers"><span class="n">3</span><span><strong>Read the gap</strong><span>Compare the cleaned headline with the true value and the cost per usable complete.</span></span></button>
+</div>
+
+<nav class="toc" aria-label="Sections">
+  <a href="#sec-ladder"><b>01</b>The cleaning ladder</a>
+  <a href="#sec-providers"><b>02</b>Provider comparison</a>
+  <a href="#sec-coding"><b>03</b>Open-end coding</a>
+  <a href="#sec-limits"><b>04</b>What cleaning cannot fix</a>
+  <a href="#sec-notes"><b>05</b>Notes on the model</a>
+  <a href="#sec-method"><b>M</b>Methodology</a>
+</nav>
+
+<!-- ============ 01. THE CLEANING LADDER ============ -->
+<section id="sec-ladder" aria-labelledby="h-ladder">
+  <div class="sec-head"><span class="sec-num">01</span><h2 id="h-ladder">The cleaning ladder</h2></div>
+  <p class="sec-sub">One survey, one provider at a time. The checks below are the screens a research team runs before a tracker number reaches a deck. Each check removes the respondents it flags, and every output on this page recomputes on each change.</p>
+
+  <div class="card">
+    <h3>Provider</h3>
+    <p class="hint">The three providers field the identical questionnaire. Their prices and their respondent mixes differ.</p>
+    <div class="seg" id="providerSeg" role="group" aria-label="Provider">
+      <button type="button" data-provider="A" aria-pressed="false">Provider A · $6.50</button>
+      <button type="button" data-provider="B" aria-pressed="true">Provider B · $4.00</button>
+      <button type="button" data-provider="C" aria-pressed="false">Provider C · $1.80</button>
+    </div>
+    <div class="preset-row" id="presetRow" role="group" aria-label="Cleaning presets">
+      <button type="button" class="lchip" data-preset="none">No cleaning</button>
+      <button type="button" class="lchip" data-preset="cheap">Cheap checks only</button>
+      <button type="button" class="lchip" data-preset="openend">Open-end review only</button>
+      <button type="button" class="lchip on" data-preset="all">All checks on</button>
+    </div>
+    <p class="src" style="margin-top:8px">Presets set the five check toggles below. Moving any toggle by hand clears the preset highlight.</p>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <div class="card">
+      <h3>Quality checks</h3>
+      <div class="toggle-row">
+        <div><div class="t">Attention checks</div><div class="d">Instructed-response items sit inside the grid batteries. A respondent who misses the instruction is removed.</div></div>
+        <label class="switch"><input type="checkbox" id="chkAttention" checked><span class="tr"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="t">Speeder screen</div><div class="d">A completion time under the threshold set below is removed.</div></div>
+        <label class="switch"><input type="checkbox" id="chkSpeeder" checked><span class="tr"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="t">Straightline detection</div><div class="d">Identical answers down a full grid battery are removed.</div></div>
+        <label class="switch"><input type="checkbox" id="chkStraight" checked><span class="tr"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="t">Demographic consistency</div><div class="d">Age and life-stage answers that disagree with each other are removed.</div></div>
+        <label class="switch"><input type="checkbox" id="chkDemo" checked><span class="tr"></span></label>
+      </div>
+      <div class="toggle-row">
+        <div><div class="t">Open-end review</div><div class="d">Open-end text flagged as fabricated or pasted is removed. This is the only check that reads the words themselves.</div></div>
+        <label class="switch"><input type="checkbox" id="chkOpenEnd" checked><span class="tr"></span></label>
+      </div>
+      <div class="ctl">
+        <label for="speederRange">Speeder threshold, minutes <output id="speederOut">3.0</output></label>
+        <input type="range" class="hasnum" id="speederRange" min="1" max="6" step="0.1" value="3"><input type="number" class="numin" id="speederNum" min="1" max="6" step="0.1" value="3" aria-label="Speeder threshold in minutes">
+        <p class="note">The attentive median completion time is 9.0 minutes. A threshold of 3.0 minutes sits at about a third of it. Raising the threshold catches more speeders and removes more attentive respondents with them.</p>
+      </div>
+      <div class="ctl">
+        <label for="priceNum">Price per complete, at the selected provider</label>
+        <input type="number" id="priceNum" min="0.1" max="50" step="0.1" value="4" aria-label="Price per complete in dollars">
+        <p class="note">Defaults to the selected provider's price ($6.50, $4.00, or $1.80). Editing the price leaves the respondent data untouched and reprices the field.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Headline by cleaning level</h3>
+      <p class="hint">Brand consideration at four fixed cleaning levels for the selected provider, against the true value. The axis runs from 30% to 60% so the movement stays readable; the zero point sits outside this view.</p>
+      <div id="ladderChart" role="img" aria-label="Dot plot of brand consideration at four cleaning levels, with the true value drawn as a line"></div>
+      <p class="src" id="ladderChartNote">Ladder levels use the speeder threshold currently set. The toggles on the left set the current-settings outputs below and can differ from every ladder level.</p>
+    </div>
+  </div>
+
+  <div class="kpis" id="ladderKpis">
+    <div class="kpi"><div class="v" id="kSurvive">—</div><div class="k">Completes surviving</div><div class="s">Of 2,400 raw completes, at the current settings</div></div>
+    <div class="kpi"><div class="v" id="kRate">—</div><div class="k">Survival rate</div><div class="s">Share of raw completes still in the data</div></div>
+    <div class="kpi"><div class="v" id="kCost">—</div><div class="k">Cost per usable complete</div><div class="s">Full field cost divided by surviving completes</div></div>
+    <div class="kpi"><div class="v" id="kHeadline">—</div><div class="k">Headline, cleaned</div><div class="s">Brand consideration among surviving completes</div></div>
+    <div class="kpi"><div class="v" id="kGap">—</div><div class="k">Gap to the true value</div><div class="s">Cleaned headline minus the true value, in points</div></div>
+  </div>
+  <p class="pickread" id="ladderReadout">—</p>
+
+  <div class="card">
+    <h3>Who is left in the data</h3>
+    <p class="hint">Composition of the surviving completes by respondent stratum, at the current settings. Cleaning removes named failure modes, and the strip shows which ones remain.</p>
+    <div class="mixbar" id="stripBar" aria-hidden="true"></div>
+    <div class="strip-labels" id="stripLabels"></div>
+  </div>
+</section>
+
+<!-- ============ 02. PROVIDER COMPARISON ============ -->
+<section id="sec-providers" aria-labelledby="h-providers">
+  <div class="sec-head"><span class="sec-num">02</span><h2 id="h-providers">Provider comparison</h2></div>
+  <p class="sec-sub">The same survey and the same ladder, applied to all three providers with every check on and the speeder threshold at its current setting. The accuracy bar sets the largest cleaned headline gap a provider may show and still count as meeting the bar.</p>
+  <div class="card">
+    <div class="ctl">
+      <label for="barRange">Accuracy bar, largest allowed gap to the true value, points <output id="barOut">2.0</output></label>
+      <input type="range" class="hasnum" id="barRange" min="0.5" max="5" step="0.1" value="2"><input type="number" class="numin" id="barNum" min="0.5" max="5" step="0.1" value="2" aria-label="Accuracy bar in points">
+      <p class="note">A provider meets the bar when its cleaned headline sits within this distance of the true value. The shaded cell marks the lowest cost per usable complete among the providers that meet the bar.</p>
+    </div>
+    <div class="scroll-x">
+      <table aria-label="Provider comparison with every check on">
+        <thead><tr><th>Provider</th><th>Price per complete</th><th>Raw headline</th><th>Raw gap</th><th>Usable completes</th><th>Survival rate</th><th>Cost per usable complete</th><th>Cleaned headline</th><th>Cleaned gap</th><th>Meets the bar</th></tr></thead>
+        <tbody id="providerRows"></tbody>
+      </table>
+    </div>
+    <h3 style="margin-top:18px">Cost per usable complete, every check on</h3>
+    <div id="costBars"></div>
+    <p class="src" style="margin-top:10px" id="providerNote">—</p>
+  </div>
+</section>
+
+<!-- ============ 03. OPEN-END CODING ============ -->
+<section id="sec-coding" aria-labelledby="h-coding">
+  <div class="sec-head"><span class="sec-num">03</span><h2 id="h-coding">Open-end coding</h2></div>
+  <p class="sec-sub">Machine coding of open-end answers earns trust as a measured agreement rate with human coding. In Evan Volness's program work, agreement between machine and human codes began at <strong>55.0%</strong> and reached <strong>75.3%</strong> after three routing changes. Those two percentages are program figures. The 40 responses below are a worked example written for this page, and its agreement rates are computed from the responses shown.</p>
+  <div class="card">
+    <h3>Step through the routing changes</h3>
+    <div class="preset-row" id="stepRow" role="group" aria-label="Coding steps">
+      <button type="button" class="lchip on" data-step="0">Step 0 · First pass</button>
+      <button type="button" class="lchip" data-step="1">Step 1 · Codeframe clarified</button>
+      <button type="button" class="lchip" data-step="2">Step 2 · Low-confidence routing</button>
+      <button type="button" class="lchip" data-step="3">Step 3 · Disagreement sampling</button>
+    </div>
+    <p class="hint" id="stepDesc" style="margin-top:12px">—</p>
+    <p class="pickread" id="codingReadout">—</p>
+    <div class="code-scroll">
+      <table aria-label="Worked example of open-end coding">
+        <thead><tr><th class="num">#</th><th>Open-end response</th><th>Human code</th><th>Machine code at this step</th><th>Agreement</th></tr></thead>
+        <tbody id="codingRows"></tbody>
+      </table>
+    </div>
+    <p class="src" style="margin-top:10px">Responses are illustrative and written for this page. The example's rates (55.0% at the first pass, 75.0% at step 3) are computed from the 40 responses above. The program figures (55.0% and 75.3%) come from production coding work and sit close to the example by design, so the steps stay readable at this size.</p>
+  </div>
+</section>
+
+<!-- ============ 04. WHAT CLEANING CANNOT FIX ============ -->
+<section id="sec-limits" aria-labelledby="h-limits">
+  <div class="sec-head"><span class="sec-num">04</span><h2 id="h-limits">What cleaning cannot fix</h2></div>
+  <div class="memo">
+    <p><strong>Cleaning acts on completes that already exist.</strong> Every check in §01 judges a finished interview. A person who never opened the invitation, or who closed the survey at the second question, leaves nothing for a check to judge. Nonresponse of that kind moves a tracker when the people who answer differ from the people who stay silent, and no toggle on this page touches it.</p>
+    <p><strong>Coverage sits upstream of every check.</strong> A panel reaches the people who joined it. Shoppers outside the panel, including the customers a brand most wants to win, never enter the 2,400 completes at all. Weighting can rebalance a sample toward known population margins, and it cannot create answers from people the frame never held.</p>
+    <p>The Lab models data quality after collection. Representation, the question of whose answers the completes stand for, sits outside the model, and a cleaned headline can be precise about the wrong population. The gap to truth in §01 measures distance from the attentive respondents inside the simulation. It says nothing about distance from the market outside it.</p>
+  </div>
+</section>
+
+<!-- ============ 05. NOTES ON THE MODEL ============ -->
+<section id="sec-notes" aria-labelledby="h-notes">
+  <div class="sec-head"><span class="sec-num">05</span><h2 id="h-notes">Notes on the model</h2></div>
+  <div class="card">
+    <p class="note"><span class="ev-tag assump">Simplification</span> <strong>Strata are pure types.</strong> Each simulated respondent belongs to exactly one stratum, so every failure has one cause. Field respondents mix failure modes: a fast respondent can still answer with care, and an attentive respondent can paste one open-end. The ladder's clean separation is a property of the simulation, stated here so the separation is read as a teaching device.</p>
+    <p class="note"><span class="ev-tag math">Arithmetic</span> <strong>Cost per usable complete</strong> divides the full field cost (price per complete times 2,400) by the completes that survive. It leaves out the analyst time cleaning takes. Open-end review therefore reads as free in the cost column while taking the most analyst time of any check on the page.</p>
+    <p class="note"><span class="ev-tag math">Arithmetic</span> <strong>The true value is a mean over one stratum.</strong> It is computed from the attentive respondents in the selected provider's simulated data, so it moves by small sampling amounts when the provider changes. The population value behind the attentive stratum is 38.0%.</p>
+    <p class="note"><span class="ev-tag assump">Simplification</span> <strong>Checks judge flags, and flags judge proxies.</strong> The speeder screen sees a time, and time stands in for attention. The straightline screen sees a pattern, and the pattern stands in for disengagement. Each proxy misclassifies in both directions, which is why the cleaned headline approaches the true value and stops short of it.</p>
+    <p class="note"><strong>Provider mixes are illustrative.</strong> The published platform study in Methodology §05 reports pass rates from real fieldwork. The Lab's three providers borrow the shape of that spread and nothing else; no provider on this page describes a real company.</p>
+    <p class="note" style="margin-bottom:0"><strong>The §03 example is sized for reading.</strong> Forty responses make each routing change visible as a handful of flipped rows. Production coding runs over thousands of responses, where the same changes move the agreement rate by fractions of a point at a time and the audit sample does the persuading.</p>
+  </div>
+</section>
+
+<!-- ============ METHODOLOGY ============ -->
+<div class="group-label" id="sec-method">Methodology <small>How the Lab is built, and what sits behind it</small></div>
+
+<section aria-labelledby="m-gen">
+  <div class="sec-head"><span class="sec-num">01</span><h2 id="m-gen">Dataset generation</h2></div>
+  <div class="card doc-card">
+    <p>A seeded mulberry32 generator (seed 20261123, with one stream per provider) draws 2,400 respondents per provider. Each respondent first draws a stratum from the provider's mix, then draws answers from that stratum's behavior settings. The seed fixes every draw, so the page produces identical figures for every visitor and every figure can be recomputed from this description.</p>
+    <h4>Respondent strata</h4>
+    <div class="scroll-x">
+      <table aria-label="Stratum behavior settings and provider mixes">
+        <thead><tr><th>Stratum</th><th>Consideration rate</th><th>Median time, min</th><th>Attention pass</th><th>Provider A mix</th><th>Provider B mix</th><th>Provider C mix</th></tr></thead>
+        <tbody>
+          <tr><td class="name">Attentive</td><td>38.0%</td><td>9.0</td><td>99%</td><td>82%</td><td>62%</td><td>30%</td></tr>
+          <tr><td class="name">Speeders</td><td>55.0%</td><td>2.0</td><td>50%</td><td>4%</td><td>10%</td><td>26%</td></tr>
+          <tr><td class="name">Straightliners</td><td>70.0%</td><td>5.5</td><td>85%</td><td>5%</td><td>9%</td><td>14%</td></tr>
+          <tr><td class="name">Inattentive</td><td>50.0%</td><td>7.4</td><td>15%</td><td>5%</td><td>10%</td><td>13%</td></tr>
+          <tr><td class="name">Fabricated open-ends</td><td>60.0%</td><td>7.4</td><td>90%</td><td>4%</td><td>9%</td><td>17%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px">Completion times follow a lognormal distribution around each stratum's median. Consideration rates above 38.0% in the other strata encode yea-saying and pattern answering: speeders lean toward agreement, straightliners sit at the top of positively framed grids, and fabricated completes skew positive because they are written to look engaged.</p>
+  </div>
+</section>
+
+<section aria-labelledby="m-checks">
+  <div class="sec-head"><span class="sec-num">02</span><h2 id="m-checks">Cleaning mechanics</h2></div>
+  <div class="card doc-card">
+    <p>Each respondent holds one flag per check. The attention flag records a missed instructed-response item. The speeder flag compares completion time with the threshold currently set. The straightline flag records an identical run down a full grid battery. The demographic flag records an age answer and a life-stage answer that disagree. The open-end flag records text the generator marked as fabricated or pasted.</p>
+    <p>A check removes every respondent whose flag it owns. Checks combine as a union: a respondent flagged by any active check leaves the data once. Survival, headline, and composition figures are computed over the respondents who remain, and the true value is computed over the attentive stratum before any check runs.</p>
+  </div>
+</section>
+
+<section aria-labelledby="m-cost">
+  <div class="sec-head"><span class="sec-num">03</span><h2 id="m-cost">Cost arithmetic</h2></div>
+  <div class="card doc-card">
+    <p>Field cost equals price per complete times 2,400 raw completes. Cost per usable complete equals field cost divided by surviving completes, which is the same as price per complete divided by the survival rate. Editing the price in §01 reprices the field at the same survival rate, so the cost column moves in direct proportion to the price.</p>
+    <p>In §02 the accuracy bar adds one rule: a provider meets the bar when the absolute gap between its cleaned headline and the true value is at or under the bar. The shaded cost cell marks the lowest cost per usable complete among providers meeting the bar. A provider can therefore post the lowest cost in the table and still miss the shading, which is the comparison the section exists to show.</p>
+  </div>
+</section>
+
+<section aria-labelledby="m-coding">
+  <div class="sec-head"><span class="sec-num">04</span><h2 id="m-coding">The coding example</h2></div>
+  <div class="card doc-card">
+    <p>The 40 responses in §03 were written for this page. Each holds a human code, a first-pass machine code, and the step at which the machine code reaches the human code, if it ever does. Agreement at a step counts the responses whose machine code at that step equals the human code. The steps mirror the routing changes in the program work: a clarified codeframe settles category boundary cases, routing low-confidence cases to a human settles ambiguous ones, and sampling disagreements for audit finds recurring patterns the first two steps miss.</p>
+    <p>The program figures stand apart from the example. In production, agreement moved from 55.0% to 75.3% across the same three changes, measured over the program's full coded volume. The example is built to land near those endpoints so the mechanics stay legible at 40 responses.</p>
+  </div>
+</section>
+
+<section aria-labelledby="m-evidence">
+  <div class="sec-head"><span class="sec-num">05</span><h2 id="m-evidence">Limits and evidence sources</h2></div>
+  <div class="card doc-card">
+    <p><strong>Limits.</strong> The simulation knows its truth because it generates its respondents. That device makes the gap measurable, and it also bounds every claim on the page: the Lab shows how cleaning moves a number whose truth is knowable, while fieldwork cleaning moves a number whose truth stays estimated. Strata are pure types, thresholds are single numbers, and the cost model prices completes and nothing else.</p>
+    <h4>Evidence sources</h4>
+    <ul class="srclist">
+      <li>Matheny, L. M., et al. (2026). Data Quality in Online Crowdsourced Surveys: Methodological Challenges and Analytic Insights in Survey Research. Survey Practice, May 20, 2026. One survey fielded on three paid platforms, scored with 20 quality checks; the share of completes passing every check ran 70.5%, 61.8%, and 10.2% by platform. The Lab's fictional providers borrow the shape of that spread.</li>
+      <li>Instructed-response attention items, completion-time speeder screens, and straightline detection on grid batteries are standard instruments in the survey methodology literature on online data quality; the checks in §01 implement them in their common forms.</li>
+      <li>Program figures in §03 (55.0% and 75.3% machine and human coding agreement) are from Evan Volness's open-end coding work, stated here as program results. The 40 example responses are illustrative.</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="foot">
+  <p><strong>Survey Data Quality Lab</strong><br>A working model by Evan Volness · November 2026</p>
+  <p>All respondent data on this page is simulated and generated in the browser from a fixed seed. The providers, the brand, and the survey are fictional. Program figures in §03 are stated as program results and kept apart from the simulated data.</p>
+</footer>
+
+</div>
+
+<script>
+"use strict";
+/* ================= model ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function makeGauss(rng){var spare=null;return function(){if(spare!==null){var v=spare;spare=null;return v;}var u=0,w=0,s=0;do{u=rng()*2-1;w=rng()*2-1;s=u*u+w*w;}while(s>=1||s===0);var m=Math.sqrt(-2*Math.log(s)/s);spare=w*m;return u*m;};}
+
+var STRATA=[
+  {key:"att",name:"Attentive",cssVar:"--s-att"},
+  {key:"spd",name:"Speeders",cssVar:"--s-spd"},
+  {key:"str",name:"Straightliners",cssVar:"--s-str"},
+  {key:"ina",name:"Inattentive",cssVar:"--s-ina"},
+  {key:"fab",name:"Fabricated open-ends",cssVar:"--s-fab"}
+];
+var BEHAV={
+  att:{timeMu:2.20,timeSd:0.35,consider:0.38,attPass:0.99,straight:0.01,demo:0.02,fab:0.02},
+  spd:{timeMu:0.70,timeSd:0.30,consider:0.55,attPass:0.50,straight:0.05,demo:0.08,fab:0.03},
+  str:{timeMu:1.70,timeSd:0.30,consider:0.70,attPass:0.85,straight:1.00,demo:0.08,fab:0.02},
+  ina:{timeMu:2.00,timeSd:0.35,consider:0.50,attPass:0.15,straight:0.02,demo:0.20,fab:0.03},
+  fab:{timeMu:2.00,timeSd:0.30,consider:0.60,attPass:0.90,straight:0.02,demo:0.05,fab:1.00}
+};
+var PROVIDERS=[
+  {key:"A",name:"Provider A",price:6.50,seed:20261123,mix:{att:0.82,spd:0.04,str:0.05,ina:0.05,fab:0.04}},
+  {key:"B",name:"Provider B",price:4.00,seed:20261124,mix:{att:0.62,spd:0.10,str:0.09,ina:0.10,fab:0.09}},
+  {key:"C",name:"Provider C",price:1.80,seed:20261125,mix:{att:0.30,spd:0.26,str:0.14,ina:0.13,fab:0.17}}
+];
+var N=2400;
+function generateData(prov){
+  var rng=mulberry32(prov.seed), gauss=makeGauss(rng);
+  var keys=["att","spd","str","ina","fab"], cum=[], run=0, i, k;
+  for(i=0;i<keys.length;i++){run+=prov.mix[keys[i]];cum.push(run);}
+  var data=[];
+  for(i=0;i<N;i++){
+    var u=rng(), si=0;
+    while(si<keys.length-1 && u>=cum[si]) si++;
+    var sk=keys[si], b=BEHAV[sk];
+    data.push({
+      stratum:sk,
+      consider: rng()<b.consider ? 1 : 0,
+      time: Math.exp(b.timeMu + b.timeSd*gauss()),
+      attFail: rng()>=b.attPass ? 1 : 0,
+      straight: rng()<b.straight ? 1 : 0,
+      demo: rng()<b.demo ? 1 : 0,
+      fab: rng()<b.fab ? 1 : 0
+    });
+  }
+  return data;
+}
+var DATA={}, TRUEVAL={};
+PROVIDERS.forEach(function(p){
+  DATA[p.key]=generateData(p);
+  var att=DATA[p.key].filter(function(r){return r.stratum==="att";});
+  var s=0; att.forEach(function(r){s+=r.consider;});
+  TRUEVAL[p.key]=100*s/att.length;
+});
+var ALLCHECKS={attention:true,speeder:true,straightline:true,demo:true,openend:true};
+var NOCHECKS={attention:false,speeder:false,straightline:false,demo:false,openend:false};
+function evaluate(data,checks,threshold){
+  var surv=[], counts={att:0,spd:0,str:0,ina:0,fab:0}, sum=0, i, r;
+  for(i=0;i<data.length;i++){
+    r=data[i];
+    if(checks.attention && r.attFail) continue;
+    if(checks.speeder && r.time<threshold) continue;
+    if(checks.straightline && r.straight) continue;
+    if(checks.demo && r.demo) continue;
+    if(checks.openend && r.fab) continue;
+    surv.push(r); counts[r.stratum]++; sum+=r.consider;
+  }
+  return {n:surv.length, rate:surv.length/data.length,
+    headline: surv.length? 100*sum/surv.length : null, counts:counts};
+}
+var LEVELS=[
+  {key:"raw",name:"Raw",checks:{attention:false,speeder:false,straightline:false,demo:false,openend:false}},
+  {key:"cheap",name:"Attention + speeder",checks:{attention:true,speeder:true,straightline:false,demo:false,openend:false}},
+  {key:"struct",name:"Cheap + straightline + demographics",checks:{attention:true,speeder:true,straightline:true,demo:true,openend:false}},
+  {key:"all",name:"All five checks",checks:{attention:true,speeder:true,straightline:true,demo:true,openend:true}}
+];
+/* ---- open-end coding example: [text, human code, first-pass machine code, step at which machine reaches human (0 = already agrees, 9 = never)] ---- */
+var CODING=[
+  ["The oat milk latte tastes burnt half the time.","Taste","Taste",0],
+  ["Drive-thru line moves fast even at 8am.","Speed","Speed",0],
+  ["Prices went up again, a medium is nearly six dollars.","Price","Price",0],
+  ["The music is too loud to get any work done.","Atmosphere","Atmosphere",0],
+  ["They stopped selling the cardamom bun and I miss it.","Menu","Menu",0],
+  ["Barista remembered my name and my order.","Staff","Staff",0],
+  ["Parking lot is tiny, I circle twice most visits.","Location","Location",0],
+  ["Cold brew is smooth, never bitter.","Taste","Taste",0],
+  ["Mobile order was ready when I walked in.","Speed","Speed",0],
+  ["Student discount makes it affordable for me.","Price","Price",0],
+  ["Plenty of outlets and the wifi holds up.","Atmosphere","Atmosphere",0],
+  ["Seasonal drinks rotate too fast to find a favorite.","Menu","Menu",0],
+  ["Staff seemed rushed and got my order wrong.","Staff","Staff",0],
+  ["Right off the highway, easy stop on my commute.","Location","Location",0],
+  ["Espresso shots taste consistent between locations.","Taste","Taste",0],
+  ["Waited twelve minutes for a plain drip coffee.","Speed","Speed",0],
+  ["Loyalty points add up to a free drink most months.","Price","Price",0],
+  ["The patio seating in the morning is the best part.","Atmosphere","Atmosphere",0],
+  ["Breakfast sandwiches are new and actually good.","Menu","Menu",0],
+  ["They comped my drink when the machine broke down.","Staff","Staff",0],
+  ["The new location by the station is always packed.","Location","Location",0],
+  ["Decaf tastes like dishwater, sorry.","Taste","Taste",0],
+  ["The guy at the register had my drink ready before I paid.","Speed","Staff",1],
+  ["My name was spelled wrong on the cup again.","Staff","Other",1],
+  ["They put oat milk in when I asked for regular.","Staff","Taste",1],
+  ["Great spot to kill an hour between trains.","Location","Atmosphere",2],
+  ["Worth the splurge on weekends.","Price","Other",2],
+  ["The line snakes out the door but moves.","Speed","Atmosphere",2],
+  ["Beans are roasted in-house and you can tell.","Taste","Menu",3],
+  ["They know the regulars and what we drink.","Staff","Atmosphere",3],
+  ["Fine I guess.","Other","Atmosphere",9],
+  ["My daughter loves the cake pops.","Menu","Taste",9],
+  ["Better than the place across the street.","Other","Location",9],
+  ["I go every Friday with my running club.","Other","Location",9],
+  ["The app keeps logging me out.","Other","Speed",9],
+  ["Wish they opened earlier on Sundays.","Other","Location",9],
+  ["Chairs are uncomfortable after twenty minutes.","Atmosphere","Other",9],
+  ["Gift cards make easy presents.","Price","Other",9],
+  ["The smell of the place hits you at the door.","Atmosphere","Taste",9],
+  ["My order is always waiting on the counter, cold.","Speed","Staff",9]
+];
+var CODING_STEPS=[
+  {name:"Step 0 · First pass",desc:"Machine codes applied with the original codeframe and no routing. Agreement counts 22 of the 40 responses. The disagreements cluster at category boundaries: order accuracy lands under Taste, readiness lands under Staff, and short vague answers land wherever the nearest keyword sits."},
+  {name:"Step 1 · Codeframe clarified",desc:"The codeframe gains worked examples at its boundaries. Order accuracy, including a wrong name on a cup and a wrong milk, belongs to Staff. A drink ready on arrival belongs to Speed. Three responses move into agreement, and the count reaches 25 of 40."},
+  {name:"Step 2 · Low-confidence routing",desc:"Cases the machine scores as low confidence leave the machine queue and go to a human coder. Ambiguous answers, including a location described by the hour it fills, get a considered code instead of a guessed one. Three more responses agree, and the count reaches 28 of 40."},
+  {name:"Step 3 · Disagreement sampling",desc:"A sample of the remaining disagreements goes to audit, and the audit looks for patterns rather than single errors. Two patterns surface in this example: roasting comments belong to Taste, and familiarity with regulars belongs to Staff. Two more responses agree, and the count reaches 30 of 40. Ten responses still differ, and the panel leaves them visible."}
+];
+function codingAt(step){
+  var agree=0, rows=CODING.map(function(c,i){
+    var machine = (c[3]!==9 && step>=c[3]) ? c[1] : c[2];
+    var ok = machine===c[1];
+    if(ok) agree++;
+    return {i:i+1,text:c[0],human:c[1],machine:machine,ok:ok,changed:(c[3]===step && step>0)};
+  });
+  return {agree:agree,total:CODING.length,rows:rows};
+}
+function fmtPct(x,d){return x===null?"—":x.toFixed(d===undefined?1:d)+"%";}
+function fmtMoney(x){return "$"+x.toFixed(2);}
+function fmtInt(x){return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g,",");}
+function providerByKey(k){for(var i=0;i<PROVIDERS.length;i++) if(PROVIDERS[i].key===k) return PROVIDERS[i]; return PROVIDERS[0];}
+function auditFigures(){
+  var out={trueValues:{},ladder:{},providers:{},coding:{}};
+  PROVIDERS.forEach(function(p){ out.trueValues[p.key]=+TRUEVAL[p.key].toFixed(2); });
+  ["A","B","C"].forEach(function(k){
+    var p=providerByKey(k);
+    out.ladder[k]=LEVELS.map(function(L){
+      var e=evaluate(DATA[k],L.checks,3.0);
+      return {level:L.name,surviving:e.n,survivalRate:+(100*e.rate).toFixed(2),
+        headline:+e.headline.toFixed(2),gap:+(e.headline-TRUEVAL[k]).toFixed(2),
+        costPerUsable:+(p.price/e.rate).toFixed(2)};
+    });
+    var eAll=evaluate(DATA[k],ALLCHECKS,3.0), eRaw=evaluate(DATA[k],NOCHECKS,3.0);
+    out.providers[k]={price:p.price,rawHeadline:+eRaw.headline.toFixed(2),
+      rawGap:+(eRaw.headline-TRUEVAL[k]).toFixed(2),usable:eAll.n,
+      survivalRate:+(100*eAll.rate).toFixed(2),costPerUsable:+(p.price/eAll.rate).toFixed(2),
+      cleanedHeadline:+eAll.headline.toFixed(2),cleanedGap:+(eAll.headline-TRUEVAL[k]).toFixed(2)};
+  });
+  for(var s=0;s<4;s++){var c=codingAt(s); out.coding["step"+s]={agree:c.agree,total:c.total,rate:+(100*c.agree/c.total).toFixed(1)};}
+  return out;
+}
+
+/* ================= interface ================= */
+if (typeof document !== "undefined") {
+(function(){
+  var state={provider:"B",price:4.00,threshold:3.0,bar:2.0,step:0,
+    checks:{attention:true,speeder:true,straightline:true,demo:true,openend:true}};
+  function el(id){return document.getElementById(id);}
+  function setFill(input){var min=+input.min,max=+input.max,v=+input.value;input.style.setProperty("--fill",((v-min)/(max-min)*100)+"%");}
+  function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+
+  /* steps strip */
+  Array.prototype.forEach.call(document.querySelectorAll(".step"),function(b){
+    b.addEventListener("click",function(){
+      var t=document.querySelector(b.getAttribute("data-goto"));
+      if(t) t.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  });
+
+  /* provider segmented control */
+  var segBtns=document.querySelectorAll("#providerSeg button");
+  Array.prototype.forEach.call(segBtns,function(b){
+    b.addEventListener("click",function(){
+      state.provider=b.getAttribute("data-provider");
+      var p=providerByKey(state.provider);
+      state.price=p.price; el("priceNum").value=p.price;
+      Array.prototype.forEach.call(segBtns,function(x){x.setAttribute("aria-pressed",x===b?"true":"false");});
+      renderLadder(); renderProviders();
+    });
+  });
+
+  /* presets */
+  var PRESETS={
+    none:{attention:false,speeder:false,straightline:false,demo:false,openend:false},
+    cheap:{attention:true,speeder:true,straightline:false,demo:false,openend:false},
+    openend:{attention:false,speeder:false,straightline:false,demo:false,openend:true},
+    all:{attention:true,speeder:true,straightline:true,demo:true,openend:true}
+  };
+  var presetBtns=document.querySelectorAll("#presetRow .lchip");
+  function markPreset(name){
+    Array.prototype.forEach.call(presetBtns,function(x){x.classList.toggle("on",x.getAttribute("data-preset")===name);});
+  }
+  function syncToggles(){
+    el("chkAttention").checked=state.checks.attention;
+    el("chkSpeeder").checked=state.checks.speeder;
+    el("chkStraight").checked=state.checks.straightline;
+    el("chkDemo").checked=state.checks.demo;
+    el("chkOpenEnd").checked=state.checks.openend;
+  }
+  Array.prototype.forEach.call(presetBtns,function(b){
+    b.addEventListener("click",function(){
+      var name=b.getAttribute("data-preset");
+      state.checks=JSON.parse(JSON.stringify(PRESETS[name]));
+      syncToggles(); markPreset(name); renderLadder();
+    });
+  });
+  [["chkAttention","attention"],["chkSpeeder","speeder"],["chkStraight","straightline"],["chkDemo","demo"],["chkOpenEnd","openend"]].forEach(function(pair){
+    el(pair[0]).addEventListener("change",function(){
+      state.checks[pair[1]]=el(pair[0]).checked; markPreset(""); renderLadder();
+    });
+  });
+
+  /* slider + numeric box pairs */
+  function pair(rangeId,numId,outId,fmt,apply){
+    var r=el(rangeId), n=el(numId);
+    function push(v,src){
+      v=Math.min(+r.max,Math.max(+r.min,v));
+      if(src!==r) r.value=v;
+      if(src!==n) n.value=(+v).toFixed(1);
+      el(outId).textContent=fmt(+v);
+      setFill(r); apply(+v);
+    }
+    r.addEventListener("input",function(){push(+r.value,r);});
+    n.addEventListener("change",function(){push(parseFloat(n.value)||+r.min,n);});
+    setFill(r);
+    return push;
+  }
+  pair("speederRange","speederNum","speederOut",function(v){return v.toFixed(1);},function(v){
+    state.threshold=v; renderLadder(); renderProviders();
+  });
+  pair("barRange","barNum","barOut",function(v){return v.toFixed(1);},function(v){
+    state.bar=v; renderProviders();
+  });
+  el("priceNum").addEventListener("change",function(){
+    var v=parseFloat(el("priceNum").value);
+    if(isNaN(v)||v<=0){el("priceNum").value=state.price;return;}
+    state.price=v; renderLadder();
+  });
+
+  /* headline ladder chart (SVG dot plot) */
+  function renderChart(){
+    var k=state.provider, truth=TRUEVAL[k];
+    var vals=LEVELS.map(function(L){return evaluate(DATA[k],L.checks,state.threshold).headline;});
+    var W=760,H=360,ml=46,mr=18,mt=34,mb=52,pw=W-ml-mr,ph=H-mt-mb;
+    var y0=30,y1=60;
+    function Y(v){return mt+ph-(v-y0)/(y1-y0)*ph;}
+    function X(i){return ml+pw*(i+0.5)/LEVELS.length;}
+    var ink=cssVar("--ink"),muted=cssVar("--muted"),line=cssVar("--line2"),accent=cssVar("--accent"),ink2=cssVar("--ink2");
+    var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="presentation" font-size="12">';
+    [30,40,50,60].forEach(function(g){
+      s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(g)+'" y2="'+Y(g)+'" stroke="'+line+'" stroke-width="1"/>';
+      s+='<text x="'+(ml-8)+'" y="'+(Y(g)+4)+'" text-anchor="end" fill="'+muted+'">'+g+'%</text>';
+    });
+    s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(truth)+'" y2="'+Y(truth)+'" stroke="'+ink+'" stroke-width="2"/>';
+    s+='<text x="'+(ml+2)+'" y="'+(Y(truth)-8)+'" text-anchor="start" fill="'+ink+'" font-weight="700">True value, attentive respondents only: '+truth.toFixed(1)+'%</text>';
+    vals.forEach(function(v,i){
+      if(i>0){
+        s+='<line x1="'+X(i-1)+'" x2="'+X(i)+'" y1="'+Y(vals[i-1])+'" y2="'+Y(v)+'" stroke="'+accent+'" stroke-width="2" stroke-dasharray="1 0" opacity="0.45"/>';
+      }
+      s+='<circle cx="'+X(i)+'" cy="'+Y(v)+'" r="6" fill="'+accent+'" stroke="var(--card)" stroke-width="2"/>';
+      s+='<text x="'+X(i)+'" y="'+(Y(v)-14)+'" text-anchor="middle" fill="'+ink+'" font-weight="700" font-size="13">'+v.toFixed(1)+'%</text>';
+      var label=LEVELS[i].name;
+      var words=label.split(" ");
+      var lines=[],cur="";
+      words.forEach(function(w){ if((cur+" "+w).trim().length>20){lines.push(cur.trim());cur=w;} else {cur=cur+" "+w;} });
+      if(cur.trim()) lines.push(cur.trim());
+      lines.forEach(function(ln,li){
+        s+='<text x="'+X(i)+'" y="'+(H-mb+20+li*14)+'" text-anchor="middle" fill="'+ink2+'">'+esc(ln)+'</text>';
+      });
+    });
+    s+='</svg>';
+    el("ladderChart").innerHTML=s;
+  }
+
+  /* composition strip */
+  function renderStrip(counts,total){
+    var bar="",labels="";
+    STRATA.forEach(function(st){
+      var c=counts[st.key], share=total? 100*c/total : 0;
+      if(c>0) bar+='<i style="background:var('+st.cssVar+');width:'+share+'%"></i>';
+      labels+='<div class="sl"><b><i style="background:var('+st.cssVar+')"></i>'+st.name+'</b>'+fmtInt(c)+' completes · '+share.toFixed(1)+'% of survivors</div>';
+    });
+    el("stripBar").innerHTML=bar;
+    el("stripLabels").innerHTML=labels;
+  }
+
+  function currentChecks(){return state.checks;}
+  function renderLadder(){
+    var k=state.provider, p=providerByKey(k), data=DATA[k], truth=TRUEVAL[k];
+    var e=evaluate(data,currentChecks(),state.threshold);
+    var cost=e.n? state.price/e.rate : null;
+    var gap=e.headline===null? null : e.headline-truth;
+    el("kSurvive").textContent=fmtInt(e.n);
+    el("kRate").textContent=fmtPct(100*e.rate);
+    el("kCost").textContent=cost===null?"—":fmtMoney(cost);
+    el("kHeadline").textContent=fmtPct(e.headline);
+    el("kGap").textContent=gap===null?"—":((gap>=0?"+":"")+gap.toFixed(1)+" pts");
+    el("ladderReadout").innerHTML="At the current settings, <strong>"+p.name+"</strong> keeps <span class='mono'>"+fmtInt(e.n)+" of 2,400</span> completes. The headline sits at <span class='mono'>"+fmtPct(e.headline)+"</span>, which is <span class='mono'>"+(gap===null?"—":Math.abs(gap).toFixed(1)+" points "+(gap>=0?"above":"below"))+"</span> the true value of <span class='mono'>"+truth.toFixed(1)+"%</span>, at <span class='mono'>"+(cost===null?"—":fmtMoney(cost))+"</span> per usable complete.";
+    renderChart();
+    renderStrip(e.counts,e.n);
+  }
+
+  /* provider comparison */
+  function renderProviders(){
+    var rows="", bestCost=null, evals={};
+    PROVIDERS.forEach(function(p){
+      var raw=evaluate(DATA[p.key],NOCHECKS,state.threshold);
+      var all=evaluate(DATA[p.key],ALLCHECKS,state.threshold);
+      var cost=p.price/all.rate;
+      var gap=all.headline-TRUEVAL[p.key];
+      var meets=Math.abs(gap)<=state.bar;
+      evals[p.key]={raw:raw,all:all,cost:cost,gap:gap,meets:meets};
+      if(meets && (bestCost===null||cost<bestCost)) bestCost=cost;
+    });
+    PROVIDERS.forEach(function(p){
+      var v=evals[p.key], truth=TRUEVAL[p.key];
+      rows+="<tr><td class='name'>"+p.name+"</td>"
+        +"<td>"+fmtMoney(p.price)+"</td>"
+        +"<td>"+fmtPct(v.raw.headline)+"</td>"
+        +"<td>"+((v.raw.headline-truth)>=0?"+":"")+(v.raw.headline-truth).toFixed(1)+" pts</td>"
+        +"<td>"+fmtInt(v.all.n)+"</td>"
+        +"<td>"+fmtPct(100*v.all.rate)+"</td>"
+        +"<td"+(v.meets&&v.cost===bestCost?" class='lead'":"")+">"+fmtMoney(v.cost)+"</td>"
+        +"<td>"+fmtPct(v.all.headline)+"</td>"
+        +"<td>"+(v.gap>=0?"+":"")+v.gap.toFixed(1)+" pts</td>"
+        +"<td>"+(v.meets?"<span class='flag ok'>Meets the bar</span>":"<span class='flag breach'>Misses the bar</span>")+"</td></tr>";
+    });
+    el("providerRows").innerHTML=rows;
+    var maxCost=Math.max(evals.A.cost,evals.B.cost,evals.C.cost), bars="";
+    PROVIDERS.forEach(function(p){
+      var v=evals[p.key];
+      bars+='<div class="bar-row"><span>'+p.name+'</span><span class="bar-track"><i style="width:'+(100*v.cost/maxCost)+'%"></i></span><span class="mono">'+fmtMoney(v.cost)+'</span></div>';
+    });
+    el("costBars").innerHTML=bars;
+    var cheapest=PROVIDERS[0], cheapestMeets=null;
+    PROVIDERS.forEach(function(p){
+      if(evals[p.key].cost<evals[cheapest.key].cost) cheapest=p;
+      if(evals[p.key].meets && (cheapestMeets===null||evals[p.key].cost<evals[cheapestMeets.key].cost)) cheapestMeets=p;
+    });
+    var note="Provider C posts the lowest price per complete at $1.80. "+cheapest.name+" posts the lowest cost per usable complete in the table, at "+fmtMoney(evals[cheapest.key].cost)+". ";
+    if(cheapestMeets && cheapestMeets.key!==cheapest.key){
+      note+="At an accuracy bar of "+state.bar.toFixed(1)+" points, "+cheapest.name+" misses the bar with a cleaned gap of "+(evals[cheapest.key].gap>=0?"+":"")+evals[cheapest.key].gap.toFixed(1)+" points, and the lowest cost among providers meeting the bar belongs to "+cheapestMeets.name+" at "+fmtMoney(evals[cheapestMeets.key].cost)+" per usable complete.";
+    } else if(cheapestMeets){
+      note+="At an accuracy bar of "+state.bar.toFixed(1)+" points, "+cheapestMeets.name+" also posts the lowest cost among the providers meeting the bar. Tightening the bar changes which providers qualify before it changes what any of them cost.";
+    } else {
+      note+="At an accuracy bar of "+state.bar.toFixed(1)+" points, no provider meets the bar, so the shaded cell stays empty.";
+    }
+    el("providerNote").textContent=note;
+  }
+
+  /* coding panel */
+  var stepBtns=document.querySelectorAll("#stepRow .lchip");
+  function renderCoding(){
+    var c=codingAt(state.step);
+    el("stepDesc").textContent=CODING_STEPS[state.step].desc;
+    el("codingReadout").innerHTML="At this step, machine and human codes agree on <span class='mono'>"+c.agree+" of "+c.total+"</span> responses in this example, an agreement rate of <span class='mono'>"+(100*c.agree/c.total).toFixed(1)+"%</span>.";
+    var rows="";
+    c.rows.forEach(function(r){
+      rows+="<tr"+(r.changed?" class='current-row'":"")+"><td class='num'>"+r.i+"</td><td>"+esc(r.text)+"</td><td>"+r.human+"</td><td>"+r.machine+"</td><td>"+(r.ok?"Agree":"Differs")+"</td></tr>";
+    });
+    el("codingRows").innerHTML=rows;
+  }
+  Array.prototype.forEach.call(stepBtns,function(b){
+    b.addEventListener("click",function(){
+      state.step=+b.getAttribute("data-step");
+      Array.prototype.forEach.call(stepBtns,function(x){x.classList.toggle("on",x===b);});
+      renderCoding();
+    });
+  });
+
+  renderLadder(); renderProviders(); renderCoding();
+})();
+}
+</script>
+</body>
+</html>
